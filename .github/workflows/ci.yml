@@ -1,39 +1,70 @@
-name: CI
+name: Lint, Audit and Test
 
 on:
-  pull_request:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  CI: true
 
 jobs:
-  scan_ruby:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: .ruby-version
-          bundler-cache: true
-
-      - name: Scan for common Rails security vulnerabilities using static analysis
-        run: bin/brakeman --no-pager
-
-  lint:
+  lint_and_audit:
+    name: Lint and Audit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
           bundler-cache: true
 
-      - name: Lint code for consistent style
-        run: bin/rubocop -f github
+      - name: Run Zeitwerk check
+        run: bundle exec rails zeitwerk:check
 
+      - name: Run Brakeman
+        run: bundle exec brakeman --no-pager
+
+      - name: Run Rubocop
+        run: bundle exec rubocop
+
+  test:
+    needs: lint_and_audit
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_HOST: localhost
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Prepare database
+        run: bundle exec rails db:create db:test:prepare
+
+      - name: Run RSpec
+        run: bundle exec rspec
