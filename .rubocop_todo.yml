@@ -1,0 +1,37 @@
+Metrics/ClassLength:
+  Enabled: false
+
+Layout/LineLength:
+  Enabled: false
+
+RSpec/NestedGroups:
+  Max: 6
+
+Rails/SkipsModelValidations:
+  AllowedMethods: ['update_all']
+
+# after migration squash remove this
+Rails/ReversibleMigration:
+  Enabled: false
+
+# after fixing nullable boolean columns in the database and migration squash remove this
+Rails/ThreeStateBooleanColumn:
+  Enabled: false
+
+# after migration squash remove this
+Rails/BulkChangeTable:
+  Enabled: false
+
+# after migration squash remove this
+Rails/DangerousColumnNames:
+  Enabled: false
+
+# after migration squash remove this
+Rails/NotNullColumn:
+  Enabled: false
+
+Metrics/MethodLength:
+  Max: 30
+
+Metrics/AbcSize:
+  Max: 30

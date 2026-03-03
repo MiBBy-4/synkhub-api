@@ -1,8 +1,100 @@
-# Omakase Ruby styling for Rails
-inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+inherit_from: .rubocop_todo.yml
 
-# Overwrite or add rules to create your own house style
-#
-# # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
-# Layout/SpaceInsideArrayLiteralBrackets:
-#   Enabled: false
+require:
+  - rubocop-factory_bot
+  - rubocop-performance
+  - rubocop-rails
+  - rubocop-rspec
+  - rubocop-rspec_rails
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.3.6
+  Exclude:
+    - 'bin/**/**'
+    - 'vendor/**/**'
+    - 'app/api/**/*.rb'
+    - 'app/models/wix_site.rb'
+
+Style/Documentation:
+  Enabled: false
+
+Rails/Exit:
+  Enabled: false
+
+Rails/I18nLocaleTexts:
+  Enabled: false
+
+Style/HashSyntax:
+  EnforcedShorthandSyntax: 'never'
+
+Style/StringLiterals:
+  EnforcedStyle: 'double_quotes'
+
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: 'comma'
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: 'comma'
+
+Style/SafeNavigationChainLength:
+  Max: 3
+
+Style/SymbolArray:
+  EnforcedStyle: "brackets"
+
+Style/WordArray:
+  EnforcedStyle: "brackets"
+
+Lint/MissingSuper:
+  Enabled: false
+
+RSpec/ImplicitSubject:
+  Enabled: false
+
+RSpecRails/InferredSpecType:
+  Enabled: false
+
+RSpec/MultipleExpectations:
+  Max: 20
+
+RSpec/MultipleMemoizedHelpers:
+  Max: 10
+
+RSpec/ExampleLength:
+  Max: 30
+
+RSpec/IndexedLet:
+  Max: 5
+
+RSpec/ExpectChange:
+  EnforcedStyle: block
+
+Style/IfUnlessModifier:
+  Enabled: false
+
+Rails/OutputSafety:
+  Enabled: false
+
+Lint/EmptyBlock:
+  Exclude:
+    - 'spec/factories/**/*.rb'
+
+Style/NumericPredicate:
+  EnforcedStyle: comparison
+
+Rails/TransactionExitStatement:
+  Enabled: false
+
+Rails/WhereExists:
+  EnforcedStyle: 'where'
+
+Metrics/ParameterLists:
+  CountKeywordArgs: false
+
+Rails/UnknownEnv:
+  Environments:
+    - development
+    - test
+    - staging
+    - production
