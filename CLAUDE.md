@@ -2,6 +2,8 @@
 
 Rails 8 API-only application with PostgreSQL, Sidekiq/Redis for background jobs.
 
+For a high-level understanding of the project's goals, scope, and future direction, refer to `README.md`.
+
 ## Tech Stack
 
 - Ruby 3.4.3, Rails 8.0.2
