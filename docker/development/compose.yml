@@ -18,6 +18,8 @@ services:
     depends_on:
       synkhub-api-development-postgresql:
         condition: service_healthy
+      synkhub-api-development-redis:
+        condition: service_started
     ports:
       - 3000:3000
     environment:
@@ -25,6 +27,31 @@ services:
       DATABASE_USERNAME: postgres
       DATABASE_PASSWORD: postgres
       DATABASE_URL: postgres://postgres:postgres@synkhub-api-development-postgresql:5432
+      REDIS_URL: redis://synkhub-api-development-redis:6379/0
+    networks:
+      - synkhub-api-development-network
+
+  synkhub-api-development-sidekiq:
+    container_name: synkhub-api-development-sidekiq
+    image: synkhub-api-development-rails:latest
+    command: bundle exec sidekiq -C config/sidekiq.yml
+    stdin_open: true
+    tty: true
+    restart: always
+    volumes:
+      - ../../.:/app
+      - synkhub-api-development-bundle-cache:/usr/local/bundle
+    depends_on:
+      synkhub-api-development-postgresql:
+        condition: service_healthy
+      synkhub-api-development-redis:
+        condition: service_started
+    environment:
+      DATABASE_HOST: synkhub-api-development-postgresql
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_URL: postgres://postgres:postgres@synkhub-api-development-postgresql:5432
+      REDIS_URL: redis://synkhub-api-development-redis:6379/0
     networks:
       - synkhub-api-development-network
 
@@ -46,6 +73,14 @@ services:
     networks:
       - synkhub-api-development-network
 
+  synkhub-api-development-redis:
+    container_name: synkhub-api-development-redis
+    image: redis:7-alpine
+    volumes:
+      - synkhub-api-development-redis-data:/data
+    networks:
+      - synkhub-api-development-network
+
 networks:
   synkhub-api-development-network:
     name: synkhub-api-development-network
@@ -53,3 +88,4 @@ networks:
 volumes:
   synkhub-api-development-bundle-cache:
   synkhub-api-development-postgresql-data:
+  synkhub-api-development-redis-data:
