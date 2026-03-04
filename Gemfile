@@ -52,7 +52,6 @@ group :development, :test do
   gem "factory_bot_rails"
   gem "faker"
   gem "rspec-rails"
-  gem "rspec-sidekiq"
   gem "shoulda-matchers"
 
   gem "rubocop-factory_bot", require: false
@@ -60,4 +59,8 @@ group :development, :test do
   gem "rubocop-rails", require: false
   gem "rubocop-rspec", require: false
   gem "rubocop-rspec_rails", require: false
+end
+
+group :test do
+  gem "rspec-sidekiq"
 end

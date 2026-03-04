@@ -3,6 +3,9 @@
 class User < ApplicationRecord
   has_secure_password
 
+  has_many :github_repo_subscriptions, dependent: :destroy
+  has_many :github_notifications, dependent: :destroy
+
   encrypts :github_access_token
 
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }

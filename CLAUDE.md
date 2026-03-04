@@ -48,6 +48,16 @@ ApplicationController (ActionController::API)
 
 All API controllers live under `app/controllers/api/v1/`. Public endpoints inherit from `Api::V1::ApplicationController`. Protected endpoints inherit from `Api::V1::AuthenticatedController`.
 
+When a controller references the same scope/association more than once, extract a private scope method (e.g. `github_notifications_scope`) to DRY it up:
+
+```ruby
+private
+
+def github_notifications_scope
+  current_user.github_notifications
+end
+```
+
 All controllers that accept params **must** define a private strong parameters method. Never access `params[:key]` directly in actions — always go through the permit method:
 
 ```ruby
@@ -244,6 +254,7 @@ Key non-default rules that affect generated code:
 - **No class documentation** required
 - **`where(...)` over `exists?`** for Rails queries
 - **Keyword args don't count** toward parameter list limits
+- **Never disable RuboCop rules** with inline `# rubocop:disable` comments without explicit user approval. Instead, rename/refactor to satisfy the cop (e.g. `required_scope?` instead of `has_required_scope?`).
 
 ## Test Patterns
 
@@ -255,6 +266,7 @@ Key non-default rules that affect generated code:
 - Use `freeze_time` (not `travel_to`) for time-sensitive tests
 - Use named constants (e.g. `GithubWebhookEvent::PENDING_STATUS`) instead of bare strings
 - Use Faraday test stubs (not `Net::HTTP` mocks) for HTTP interactions
+- Use `described_class` instead of hardcoding the class name in specs. If testing base class behavior through a concrete subclass, `RSpec.describe` the concrete class and use `described_class` for all calls.
 
 ### Request Specs
 
