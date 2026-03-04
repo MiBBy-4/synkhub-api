@@ -20,6 +20,9 @@ gem "jwt"
 # Fast JSON serialization
 gem "alba"
 
+# HTTP client
+gem "faraday"
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: [:windows, :jruby]
 

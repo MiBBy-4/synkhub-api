@@ -12,6 +12,16 @@ Rails.application.routes.draw do
       post "signup", to: "registrations#create"
       post "login",  to: "sessions#create"
       get  "me",     to: "users#me"
+
+      # GitHub OAuth
+      namespace :github do
+        get    "auth",       to: "/api/v1/github#auth"
+        post   "callback",   to: "/api/v1/github#callback"
+        delete "disconnect", to: "/api/v1/github#disconnect"
+      end
+
+      # Webhooks
+      post "webhooks/github", to: "webhooks#github"
     end
   end
 end

@@ -15,6 +15,7 @@ AllCops:
     - 'vendor/**/**'
     - 'app/api/**/*.rb'
     - 'app/models/wix_site.rb'
+    - 'db/schema.rb'
 
 Style/Documentation:
   Enabled: false

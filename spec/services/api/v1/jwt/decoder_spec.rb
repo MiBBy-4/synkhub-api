@@ -19,7 +19,7 @@ RSpec.describe Api::V1::Jwt::Decoder do
     context "with an expired token" do
       let(:token) do
         payload = { user_id: user.id, exp: 1.hour.ago.to_i }
-        JWT.encode(payload, Rails.application.secret_key_base, "HS256")
+        JWT.encode(payload, ENV["JWT_SECRET"] || Rails.application.secret_key_base, "HS256")
       end
 
       it "returns Token has expired error" do
@@ -40,7 +40,7 @@ RSpec.describe Api::V1::Jwt::Decoder do
     context "when the user no longer exists" do
       let(:token) do
         payload = { user_id: -1, exp: 24.hours.from_now.to_i }
-        JWT.encode(payload, Rails.application.secret_key_base, "HS256")
+        JWT.encode(payload, ENV["JWT_SECRET"] || Rails.application.secret_key_base, "HS256")
       end
 
       it "returns User not found error" do

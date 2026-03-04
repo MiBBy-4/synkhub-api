@@ -12,7 +12,8 @@ RSpec.describe Api::V1::Jwt::Encoder do
       expect(result.value).to be_a(String)
       expect(result.value.split(".").length).to eq(3)
 
-      decoded = JWT.decode(result.value, Rails.application.secret_key_base, true, algorithm: "HS256").first
+      secret = ENV["JWT_SECRET"] || Rails.application.secret_key_base
+      decoded = JWT.decode(result.value, secret, true, algorithm: "HS256").first
       expect(decoded["user_id"]).to eq(user.id)
       expect(decoded["exp"]).to be_within(5).of(24.hours.from_now.to_i)
     end

@@ -9,6 +9,7 @@ For a high-level understanding of the project's goals, scope, and future directi
 - Ruby 3.4.3, Rails 8.0.2
 - PostgreSQL, Redis, Sidekiq
 - JWT (stateless auth, 24h expiry, no refresh tokens)
+- Faraday (HTTP client)
 - Alba (JSON serialization)
 - bcrypt (`has_secure_password`)
 - RSpec, FactoryBot, Faker, Shoulda Matchers
@@ -165,6 +166,52 @@ Stateless JWT. No sessions table, no server-side revocation. Logout is client-si
 - `Api::V1::Authentication` concern — `authenticate_request!` before_action, extracts bearer token, sets `current_user`
 - JWT secret: `ENV["JWT_SECRET"]` with `Rails.application.secret_key_base` fallback
 
+### Workers
+
+Background jobs use Sidekiq workers directly (`include Sidekiq::Worker`), **not** `ApplicationJob` / Active Job. Workers live under `app/workers/`, specs under `spec/workers/`.
+
+Convention:
+- Class name ends with `Worker` (not `Job`)
+- `include Sidekiq::Worker`
+- `sidekiq_options` for retry, queue, backtrace
+- `sidekiq_retries_exhausted` block for failure handling (not `rescue`/`raise` in `perform`)
+- Enqueue with `perform_async` (not `perform_later`)
+- Keep `perform` body clean — no rescue/raise wrapping
+
+Example:
+
+```ruby
+class ProcessGithubWebhookEventWorker
+  include Sidekiq::Worker
+
+  sidekiq_options retry: 5, backtrace: true, queue: "webhooks"
+
+  sidekiq_retries_exhausted do |msg, error|
+    event = GithubWebhookEvent.find_by(id: msg["args"].first)
+    event&.mark_failed!(error.message)
+  end
+
+  def perform(event_id)
+    event = GithubWebhookEvent.find(event_id)
+    event.mark_processing!
+    event.mark_processed!
+  end
+end
+```
+
+### Named Constants
+
+Use named array constants when individual values are referenced elsewhere in the codebase. Values that are never referenced individually (like `SUPPORTED_EVENTS`) stay as plain arrays.
+
+```ruby
+STATUSES = [
+  PENDING_STATUS = "pending",
+  PROCESSING_STATUS = "processing",
+  PROCESSED_STATUS = "processed",
+  FAILED_STATUS = "failed",
+].freeze
+```
+
 ### Routes
 
 Namespaced under `api/v1`:
@@ -200,12 +247,20 @@ Key non-default rules that affect generated code:
 
 ## Test Patterns
 
+### General Rules
+
+- `it` blocks contain **only** `expect`s — no method calls, no `reload`, no setup
+- Setup (service calls, `reload`, mutations) goes in `before` blocks
+- No hardcoded values — use `Faker` / `SecureRandom` for all generated data (including factories)
+- Use `freeze_time` (not `travel_to`) for time-sensitive tests
+- Use named constants (e.g. `GithubWebhookEvent::PENDING_STATUS`) instead of bare strings
+- Use Faraday test stubs (not `Net::HTTP` mocks) for HTTP interactions
+
 ### Request Specs
 
 - HTTP request goes in `before` block, placed before all contexts at the `describe` level
 - Use `let` for params — never `let!`
 - If you need a record created before tests, create it in `before` block (not `let!`)
-- No hardcoded values — use Faker for all generated data
 - Verify that the correct service is called (expect `.call` with args) or not called
 
 ```ruby
@@ -243,9 +298,8 @@ end
 
 - `result` as a `let` at the top of the `describe` block
 - Entities via `let` (e.g. `let(:user) { create(:user) }`) — not in `before`
-- No hardcoded values — use Faker
-
 - Prefer one `it` block per context — use compound expectations
+- When `result` causes side effects (e.g. DB updates), use `before { result }` and `before { user.reload }` so `it` blocks stay expect-only
 
 ```ruby
 RSpec.describe Api::V1::Authentication::Authenticate do
