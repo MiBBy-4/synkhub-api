@@ -323,6 +323,14 @@ Lists the authenticated user's notifications (newest first).
 
 **Headers:** `Authorization: Bearer <jwt_token>` (required)
 
+**Query parameters (all optional):**
+
+| Param        | Type   | Description                                   |
+|--------------|--------|-----------------------------------------------|
+| `event_type` | string | Filter by event type (e.g., `push`)           |
+| `repo`       | string | Filter by repository full name (e.g., `org/repo`) |
+| `read`       | string | Filter by read status (`true` or `false`)     |
+
 **Success response:** `200 OK`
 
 ```json
@@ -389,6 +397,72 @@ Marks all unread notifications as read.
 **Headers:** `Authorization: Bearer <jwt_token>` (required)
 
 **Success response:** `204 No Content`
+
+**Error responses:**
+
+- `401 Unauthorized` — missing or invalid token
+
+---
+
+### GET /api/v1/github/stats
+
+Returns aggregate notification statistics for the authenticated user.
+
+**Headers:** `Authorization: Bearer <jwt_token>` (required)
+
+**Success response:** `200 OK`
+
+```json
+{
+  "data": {
+    "total": 15,
+    "unread": 7,
+    "by_event_type": {
+      "push": 8,
+      "pull_request": 5,
+      "issues": 2
+    },
+    "by_repo": {
+      "org/repo": 10,
+      "org/other": 5
+    }
+  },
+  "meta": {}
+}
+```
+
+**Error responses:**
+
+- `401 Unauthorized` — missing or invalid token
+
+---
+
+### GET /api/v1/github/commits
+
+Returns recent commits from the user's subscribed repositories (extracted from processed push webhook events).
+
+**Headers:** `Authorization: Bearer <jwt_token>` (required)
+
+**Success response:** `200 OK`
+
+```json
+{
+  "data": [
+    {
+      "sha": "abc123def456...",
+      "message": "Fix login bug",
+      "author_name": "Octocat",
+      "author_login": "octocat",
+      "url": "https://github.com/org/repo/commit/abc123",
+      "timestamp": "2026-03-04T12:00:00Z",
+      "repo_full_name": "org/repo",
+      "branch": "main",
+      "pusher": "octocat"
+    }
+  ],
+  "meta": {}
+}
+```
 
 **Error responses:**
 

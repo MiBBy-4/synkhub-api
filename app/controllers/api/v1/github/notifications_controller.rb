@@ -6,6 +6,11 @@ module Api
       class NotificationsController < AuthenticatedController
         def index
           notifications = github_notifications_scope.newest_first
+          notifications = notifications.where(event_type: filter_params[:event_type]) if filter_params[:event_type].present?
+          notifications = notifications.where(repo_full_name: filter_params[:repo]) if filter_params[:repo].present?
+          if filter_params[:read].present?
+            notifications = notifications.where(read: ActiveModel::Type::Boolean.new.cast(filter_params[:read]))
+          end
 
           respond_with_serialized_resources_collection(notifications, serializer: GithubNotificationSerializer)
         end
@@ -27,6 +32,10 @@ module Api
 
         def github_notifications_scope
           current_user.github_notifications
+        end
+
+        def filter_params
+          params.permit(:event_type, :repo, :read)
         end
       end
     end
