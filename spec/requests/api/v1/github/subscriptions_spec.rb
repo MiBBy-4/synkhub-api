@@ -9,13 +9,16 @@ RSpec.describe "Api::V1::Github::Subscriptions", type: :request do
   describe "GET /api/v1/github/subscriptions" do
     before do
       create(:github_repo_subscription, user: user)
-      get "/api/v1/github/subscriptions", headers: headers
+      get "/api/v1/github/subscriptions", headers: headers, params: params
     end
 
+    let(:params) { {} }
+
     context "with a valid token" do
-      it "returns subscriptions" do
+      it "returns subscriptions with pagination meta" do
         expect(response).to have_http_status(:ok)
         expect(response.parsed_body["data"].size).to eq(1)
+        expect(response.parsed_body["meta"]["pagination"]).to include("current_page" => 1, "total_count" => 1)
       end
     end
 
@@ -23,6 +26,23 @@ RSpec.describe "Api::V1::Github::Subscriptions", type: :request do
       let(:headers) { {} }
 
       it { expect(response).to have_http_status(:unauthorized) }
+    end
+
+    context "with custom page and limit" do
+      let(:params) { { page: 1, limit: 1 } }
+
+      before do
+        create(:github_repo_subscription, user: user)
+        get "/api/v1/github/subscriptions", headers: headers, params: params
+      end
+
+      it "returns paginated results" do
+        expect(response).to have_http_status(:ok)
+        meta = response.parsed_body["meta"]["pagination"]
+        expect(meta["per_page"]).to eq(1)
+        expect(meta["total_count"]).to eq(2)
+        expect(meta["total_pages"]).to eq(2)
+      end
     end
   end
 

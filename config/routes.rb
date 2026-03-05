@@ -33,6 +33,11 @@ Rails.application.routes.draw do
         resources :commits, only: [:index]
       end
 
+      # User preferences
+      namespace :users do
+        resource :preferences, only: [:show, :update]
+      end
+
       # Webhooks
       post "webhooks/github", to: "webhooks#github"
     end

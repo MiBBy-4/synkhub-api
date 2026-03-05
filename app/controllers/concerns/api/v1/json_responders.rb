@@ -98,28 +98,14 @@ module Api
       private
 
       def pagination_meta(pagy)
-        if pagy.is_a?(Pagy::Countless) && pagy.vars[:countless_minimal]
-          {
-            current_page: pagy.page,
-            per_page: pagy.limit,
-          }
-        elsif pagy.is_a?(Pagy::Countless)
-          {
-            current_page: pagy.page,
-            per_page: pagy.limit,
-            next_page: pagy.next,
-            previous_page: pagy.prev,
-          }
-        else
-          {
-            current_page: pagy.page,
-            per_page: pagy.limit,
-            next_page: pagy.next,
-            previous_page: pagy.prev,
-            total_pages: pagy.last,
-            total_count: pagy.count,
-          }
-        end
+        {
+          current_page: pagy.page,
+          per_page: pagy.limit,
+          next_page: pagy.next,
+          previous_page: pagy.prev,
+          total_pages: pagy.last,
+          total_count: pagy.count,
+        }
       end
     end
   end

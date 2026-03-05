@@ -10,9 +10,10 @@ RSpec.describe Api::V1::Github::ListCommits do
     let(:repo_full_name) { "#{Faker::Internet.username}/#{Faker::App.name.parameterize}" }
 
     context "with no subscriptions" do
-      it "returns an empty array" do
+      it "returns a paginated result with empty items" do
         expect(result).to be_success
-        expect(result.value).to eq([])
+        expect(result.value.items).to eq([])
+        expect(result.value.total).to eq(0)
       end
     end
 
@@ -47,11 +48,12 @@ RSpec.describe Api::V1::Github::ListCommits do
 
       it "returns commits from subscribed repos" do
         expect(result).to be_success
-        expect(result.value.length).to eq(1)
-        expect(result.value.first.sha).to eq(commit_sha)
-        expect(result.value.first.message).to eq(commit_message)
-        expect(result.value.first.repo_full_name).to eq(repo_full_name)
-        expect(result.value.first.branch).to eq("main")
+        expect(result.value.items.length).to eq(1)
+        expect(result.value.items.first.sha).to eq(commit_sha)
+        expect(result.value.items.first.message).to eq(commit_message)
+        expect(result.value.items.first.repo_full_name).to eq(repo_full_name)
+        expect(result.value.items.first.branch).to eq("main")
+        expect(result.value.total).to eq(1)
       end
     end
 
@@ -68,9 +70,38 @@ RSpec.describe Api::V1::Github::ListCommits do
                })
       end
 
-      it "returns an empty array" do
+      it "returns a paginated result with empty items" do
         expect(result).to be_success
-        expect(result.value).to eq([])
+        expect(result.value.items).to eq([])
+        expect(result.value.total).to eq(0)
+      end
+    end
+
+    context "with page and limit" do
+      let(:result) { described_class.call(user: user, page: 2, limit: 1) }
+
+      before do
+        create(:github_repo_subscription, user: user, github_repo_id: repo_id, repo_full_name: repo_full_name)
+        create(:github_webhook_event,
+               event_type: "push",
+               status: GithubWebhookEvent::PROCESSED_STATUS,
+               payload: {
+                 "repository" => { "id" => repo_id, "full_name" => repo_full_name },
+                 "ref" => "refs/heads/main",
+                 "pusher" => { "name" => "dev" },
+                 "commits" => [
+                   { "id" => SecureRandom.hex(20), "message" => "first", "author" => { "name" => "a", "username" => "b" }, "url" => "http://x", "timestamp" => Time.current.iso8601 },
+                   { "id" => SecureRandom.hex(20), "message" => "second", "author" => { "name" => "a", "username" => "b" }, "url" => "http://y", "timestamp" => 1.minute.ago.iso8601 },
+                 ],
+               })
+      end
+
+      it "returns the second page" do
+        expect(result).to be_success
+        expect(result.value.items.length).to eq(1)
+        expect(result.value.page).to eq(2)
+        expect(result.value.limit).to eq(1)
+        expect(result.value.total).to eq(2)
       end
     end
   end

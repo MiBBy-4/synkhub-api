@@ -5,6 +5,7 @@ class User < ApplicationRecord
 
   has_many :github_repo_subscriptions, dependent: :destroy
   has_many :github_notifications, dependent: :destroy
+  has_one :user_preference, dependent: :destroy
 
   encrypts :github_access_token
 

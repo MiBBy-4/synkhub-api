@@ -212,9 +212,16 @@ Removes the GitHub connection from the user's account.
 
 ### GET /api/v1/github/repositories
 
-Lists GitHub repositories accessible to the authenticated user.
+Lists GitHub repositories accessible to the authenticated user (paginated).
 
 **Headers:** `Authorization: Bearer <jwt_token>` (required)
+
+**Query parameters (all optional):**
+
+| Param   | Type    | Default | Description                |
+|---------|---------|---------|----------------------------|
+| `page`  | integer | 1       | Page number                |
+| `limit` | integer | 20      | Items per page             |
 
 **Success response:** `200 OK`
 
@@ -229,7 +236,14 @@ Lists GitHub repositories accessible to the authenticated user.
       "owner_login": "org"
     }
   ],
-  "meta": {}
+  "meta": {
+    "pagination": {
+      "current_page": 1,
+      "per_page": 20,
+      "total_count": 1,
+      "total_pages": 1
+    }
+  }
 }
 ```
 
@@ -242,9 +256,16 @@ Lists GitHub repositories accessible to the authenticated user.
 
 ### GET /api/v1/github/subscriptions
 
-Lists the authenticated user's repo subscriptions.
+Lists the authenticated user's repo subscriptions (newest first, paginated).
 
 **Headers:** `Authorization: Bearer <jwt_token>` (required)
+
+**Query parameters (all optional):**
+
+| Param   | Type    | Default | Description                |
+|---------|---------|---------|----------------------------|
+| `page`  | integer | 1       | Page number                |
+| `limit` | integer | 20      | Items per page (max 100)   |
 
 **Success response:** `200 OK`
 
@@ -258,7 +279,16 @@ Lists the authenticated user's repo subscriptions.
       "created_at": "2026-03-04T12:00:00Z"
     }
   ],
-  "meta": {}
+  "meta": {
+    "pagination": {
+      "current_page": 1,
+      "per_page": 20,
+      "next_page": null,
+      "previous_page": null,
+      "total_pages": 1,
+      "total_count": 1
+    }
+  }
 }
 ```
 
@@ -319,17 +349,19 @@ Unsubscribe from a repo. Deletes the webhook from GitHub.
 
 ### GET /api/v1/github/notifications
 
-Lists the authenticated user's notifications (newest first).
+Lists the authenticated user's notifications (newest first, paginated).
 
 **Headers:** `Authorization: Bearer <jwt_token>` (required)
 
 **Query parameters (all optional):**
 
-| Param        | Type   | Description                                   |
-|--------------|--------|-----------------------------------------------|
-| `event_type` | string | Filter by event type (e.g., `push`)           |
-| `repo`       | string | Filter by repository full name (e.g., `org/repo`) |
-| `read`       | string | Filter by read status (`true` or `false`)     |
+| Param        | Type    | Default | Description                                       |
+|--------------|---------|---------|---------------------------------------------------|
+| `event_type` | string  |         | Filter by event type (e.g., `push`)               |
+| `repo`       | string  |         | Filter by repository full name (e.g., `org/repo`) |
+| `read`       | string  |         | Filter by read status (`true` or `false`)         |
+| `page`       | integer | 1       | Page number                                        |
+| `limit`      | integer | 20      | Items per page (max 100)                           |
 
 **Success response:** `200 OK`
 
@@ -348,7 +380,16 @@ Lists the authenticated user's notifications (newest first).
       "created_at": "2026-03-04T12:00:00Z"
     }
   ],
-  "meta": {}
+  "meta": {
+    "pagination": {
+      "current_page": 1,
+      "per_page": 20,
+      "next_page": null,
+      "previous_page": null,
+      "total_pages": 1,
+      "total_count": 1
+    }
+  }
 }
 ```
 
@@ -439,9 +480,16 @@ Returns aggregate notification statistics for the authenticated user.
 
 ### GET /api/v1/github/commits
 
-Returns recent commits from the user's subscribed repositories (extracted from processed push webhook events).
+Returns recent commits from the user's subscribed repositories (extracted from processed push webhook events, paginated).
 
 **Headers:** `Authorization: Bearer <jwt_token>` (required)
+
+**Query parameters (all optional):**
+
+| Param   | Type    | Default | Description                |
+|---------|---------|---------|----------------------------|
+| `page`  | integer | 1       | Page number                |
+| `limit` | integer | 20      | Items per page (max 50)    |
 
 **Success response:** `200 OK`
 
@@ -460,6 +508,40 @@ Returns recent commits from the user's subscribed repositories (extracted from p
       "pusher": "octocat"
     }
   ],
+  "meta": {
+    "pagination": {
+      "current_page": 1,
+      "per_page": 20,
+      "total_count": 1,
+      "total_pages": 1
+    }
+  }
+}
+```
+
+**Error responses:**
+
+- `401 Unauthorized` — missing or invalid token
+
+---
+
+---
+
+### GET /api/v1/users/preferences
+
+Returns the authenticated user's notification preferences. Returns defaults if no preferences have been saved.
+
+**Headers:** `Authorization: Bearer <jwt_token>` (required)
+
+**Success response:** `200 OK`
+
+```json
+{
+  "data": {
+    "notification_event_types": ["push", "pull_request", "issues", "..."],
+    "email_digest_enabled": false,
+    "email_digest_frequency": "weekly"
+  },
   "meta": {}
 }
 ```
@@ -467,6 +549,40 @@ Returns recent commits from the user's subscribed repositories (extracted from p
 **Error responses:**
 
 - `401 Unauthorized` — missing or invalid token
+
+---
+
+### PATCH /api/v1/users/preferences
+
+Updates the authenticated user's notification preferences. Creates the record if it doesn't exist.
+
+**Headers:** `Authorization: Bearer <jwt_token>` (required)
+
+**Request body (all fields optional):**
+
+| Field                       | Type     | Description                                                  |
+|-----------------------------|----------|--------------------------------------------------------------|
+| `notification_event_types`  | string[] | Event types that generate notifications (subset of supported events) |
+| `email_digest_enabled`      | boolean  | Whether to send email digests                                |
+| `email_digest_frequency`    | string   | `"daily"` or `"weekly"`                                       |
+
+**Success response:** `200 OK`
+
+```json
+{
+  "data": {
+    "notification_event_types": ["push", "issues"],
+    "email_digest_enabled": true,
+    "email_digest_frequency": "daily"
+  },
+  "meta": {}
+}
+```
+
+**Error responses:**
+
+- `401 Unauthorized` — missing or invalid token
+- `422 Unprocessable Entity` — invalid event types or frequency
 
 ---
 

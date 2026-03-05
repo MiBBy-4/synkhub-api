@@ -38,6 +38,8 @@ module Api
 
           def create_notifications!(users, title:, url:)
             users.filter_map do |user|
+              next unless user_wants_event?(user, event.event_type)
+
               GithubNotification.find_or_create_by!(
                 user: user,
                 github_webhook_event: event
@@ -50,6 +52,13 @@ module Api
                 notification.actor_login = actor_login
               end
             end
+          end
+
+          def user_wants_event?(user, event_type)
+            preference = user.user_preference
+            return true unless preference
+
+            preference.notification_event_types.include?(event_type)
           end
         end
       end

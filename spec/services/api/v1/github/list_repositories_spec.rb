@@ -43,14 +43,15 @@ RSpec.describe Api::V1::Github::ListRepositories do
     context "with a connected GitHub account" do
       it "returns success with normalized repos" do
         expect(result).to be_success
-        expect(result.value.size).to eq(2)
-        expect(result.value.first).to eq({
-                                           id: 123,
-                                           full_name: "org/repo-one",
-                                           name: "repo-one",
-                                           private: false,
-                                           owner_login: "org",
-                                         })
+        expect(result.value.items.size).to eq(2)
+        expect(result.value.total).to eq(2)
+        expect(result.value.items.first).to eq({
+                                                 id: 123,
+                                                 full_name: "org/repo-one",
+                                                 name: "repo-one",
+                                                 private: false,
+                                                 owner_login: "org",
+                                               })
       end
     end
 

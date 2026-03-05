@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_04_000004) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_05_105858) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -60,6 +60,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_04_000004) do
     t.index ["status"], name: "index_github_webhook_events_on_status"
   end
 
+  create_table "user_preferences", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.text "notification_event_types", default: ["push", "pull_request", "pull_request_review", "pull_request_review_comment", "issues", "issue_comment", "check_run", "check_suite", "create", "delete", "release", "workflow_run"], array: true
+    t.boolean "email_digest_enabled", default: false, null: false
+    t.string "email_digest_frequency", default: "weekly", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_user_preferences_on_user_id", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", null: false
     t.string "password_digest", null: false
@@ -76,4 +86,5 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_04_000004) do
   add_foreign_key "github_notifications", "github_webhook_events"
   add_foreign_key "github_notifications", "users"
   add_foreign_key "github_repo_subscriptions", "users"
+  add_foreign_key "user_preferences", "users"
 end

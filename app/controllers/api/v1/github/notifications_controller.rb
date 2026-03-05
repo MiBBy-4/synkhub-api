@@ -4,15 +4,18 @@ module Api
   module V1
     module Github
       class NotificationsController < AuthenticatedController
+        include Pagy::Backend
+
         def index
-          notifications = github_notifications_scope.newest_first
-          notifications = notifications.where(event_type: filter_params[:event_type]) if filter_params[:event_type].present?
-          notifications = notifications.where(repo_full_name: filter_params[:repo]) if filter_params[:repo].present?
+          scope = github_notifications_scope.newest_first
+          scope = scope.where(event_type: filter_params[:event_type]) if filter_params[:event_type].present?
+          scope = scope.where(repo_full_name: filter_params[:repo]) if filter_params[:repo].present?
           if filter_params[:read].present?
-            notifications = notifications.where(read: ActiveModel::Type::Boolean.new.cast(filter_params[:read]))
+            scope = scope.where(read: ActiveModel::Type::Boolean.new.cast(filter_params[:read]))
           end
 
-          respond_with_serialized_resources_collection(notifications, serializer: GithubNotificationSerializer)
+          pagy, notifications = pagy(scope, **pagy_options)
+          respond_with_query_results(pagy, notifications, serializer: GithubNotificationSerializer)
         end
 
         def read
@@ -36,6 +39,17 @@ module Api
 
         def filter_params
           params.permit(:event_type, :repo, :read)
+        end
+
+        def page_params
+          params.permit(:page, :limit)
+        end
+
+        def pagy_options
+          options = {}
+          options[:page] = page_params[:page] if page_params[:page].present?
+          options[:limit] = page_params[:limit] if page_params[:limit].present?
+          options
         end
       end
     end

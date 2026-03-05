@@ -4,38 +4,46 @@ module Api
   module V1
     module Github
       class ListRepositories < BaseService
-        attr_reader :user
+        attr_reader :user, :page, :limit
 
         GITHUB_API_URL = "https://api.github.com"
 
-        def initialize(user:)
+        PaginatedResult = Data.define(:items, :total, :page, :limit)
+
+        def initialize(user:, page: 1, limit: 20)
           @user = user
+          @page = page
+          @limit = limit
         end
 
         def call
           return fail!("GitHub account not connected") unless user.github_connected?
 
           repos = fetch_repos
-          success(repos)
+          total = repos.size
+          offset = (page - 1) * limit
+          paginated = repos[offset, limit] || []
+
+          success(PaginatedResult.new(items: paginated, total: total, page: page, limit: limit))
         end
 
         private
 
-        attr_writer :user
+        attr_writer :user, :page, :limit
 
         def fetch_repos
           all_repos = []
-          page = 1
+          gh_page = 1
 
           loop do
-            response = api_connection.get("/user/repos", per_page: 100, sort: "updated", page: page)
+            response = api_connection.get("/user/repos", per_page: 100, sort: "updated", page: gh_page)
             repos = response.body
             break unless repos.is_a?(Array) && repos.any?
 
             all_repos.concat(repos.map { |r| normalize_repo(r) })
             break if repos.size < 100
 
-            page += 1
+            gh_page += 1
           end
 
           all_repos

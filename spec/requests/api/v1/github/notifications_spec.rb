@@ -17,11 +17,13 @@ RSpec.describe "Api::V1::Github::Notifications", type: :request do
     end
 
     context "with a valid token" do
-      it "returns notifications newest first" do
+      it "returns notifications newest first with pagination meta" do
         expect(response).to have_http_status(:ok)
         data = response.parsed_body["data"]
+        meta = response.parsed_body["meta"]
         expect(data.size).to eq(2)
         expect(data.first["created_at"]).to be > data.last["created_at"]
+        expect(meta["pagination"]).to include("current_page" => 1, "total_count" => 2)
       end
     end
 
@@ -76,6 +78,21 @@ RSpec.describe "Api::V1::Github::Notifications", type: :request do
         expect(response).to have_http_status(:ok)
         data = response.parsed_body["data"]
         expect(data).to all(include("read" => false))
+      end
+    end
+
+    context "with custom page and limit" do
+      let(:params) { { page: 2, limit: 1 } }
+
+      it "returns the second page" do
+        expect(response).to have_http_status(:ok)
+        data = response.parsed_body["data"]
+        meta = response.parsed_body["meta"]["pagination"]
+        expect(data.size).to eq(1)
+        expect(meta["current_page"]).to eq(2)
+        expect(meta["per_page"]).to eq(1)
+        expect(meta["total_count"]).to eq(2)
+        expect(meta["total_pages"]).to eq(2)
       end
     end
   end

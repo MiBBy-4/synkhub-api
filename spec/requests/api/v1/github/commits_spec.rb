@@ -26,17 +26,28 @@ RSpec.describe "Api::V1::Github::Commits", type: :request do
                    "url" => Faker::Internet.url,
                    "timestamp" => Time.current.iso8601,
                  },
+                 {
+                   "id" => SecureRandom.hex(20),
+                   "message" => Faker::Lorem.sentence,
+                   "author" => { "name" => Faker::Name.name, "username" => Faker::Internet.username },
+                   "url" => Faker::Internet.url,
+                   "timestamp" => 1.minute.ago.iso8601,
+                 },
                ],
              })
-      get "/api/v1/github/commits", headers: headers
+      get "/api/v1/github/commits", headers: headers, params: params
     end
 
+    let(:params) { {} }
+
     context "with a valid token" do
-      it "returns commits from subscribed repos" do
+      it "returns commits with pagination meta" do
         expect(response).to have_http_status(:ok)
         data = response.parsed_body["data"]
-        expect(data.length).to eq(1)
+        meta = response.parsed_body["meta"]["pagination"]
+        expect(data.length).to eq(2)
         expect(data.first).to include("sha", "message", "repo_full_name", "branch")
+        expect(meta).to include("current_page" => 1, "total_count" => 2)
       end
     end
 
@@ -44,6 +55,20 @@ RSpec.describe "Api::V1::Github::Commits", type: :request do
       let(:headers) { {} }
 
       it { expect(response).to have_http_status(:unauthorized) }
+    end
+
+    context "with custom page and limit" do
+      let(:params) { { page: 1, limit: 1 } }
+
+      it "returns paginated commits" do
+        expect(response).to have_http_status(:ok)
+        data = response.parsed_body["data"]
+        meta = response.parsed_body["meta"]["pagination"]
+        expect(data.length).to eq(1)
+        expect(meta["per_page"]).to eq(1)
+        expect(meta["total_count"]).to eq(2)
+        expect(meta["total_pages"]).to eq(2)
+      end
     end
   end
 end

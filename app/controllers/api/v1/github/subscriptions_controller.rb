@@ -4,10 +4,12 @@ module Api
   module V1
     module Github
       class SubscriptionsController < AuthenticatedController
-        def index
-          subscriptions = github_repo_subscriptions_scope
+        include Pagy::Backend
 
-          respond_with_serialized_resources_collection(subscriptions, serializer: GithubRepoSubscriptionSerializer)
+        def index
+          pagy, subs = pagy(github_repo_subscriptions_scope.order(created_at: :desc), **pagy_options)
+
+          respond_with_query_results(pagy, subs, serializer: GithubRepoSubscriptionSerializer)
         end
 
         def create
@@ -33,6 +35,17 @@ module Api
 
         def subscription_params
           params.permit(:github_repo_id, :repo_full_name).to_h.symbolize_keys.merge(user: current_user)
+        end
+
+        def page_params
+          params.permit(:page, :limit)
+        end
+
+        def pagy_options
+          options = {}
+          options[:page] = page_params[:page] if page_params[:page].present?
+          options[:limit] = page_params[:limit] if page_params[:limit].present?
+          options
         end
       end
     end
