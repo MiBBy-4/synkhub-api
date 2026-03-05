@@ -93,6 +93,10 @@ Rails/WhereExists:
 Metrics/ParameterLists:
   CountKeywordArgs: false
 
+Metrics/BlockLength:
+  Exclude:
+    - 'config/routes.rb'
+
 Rails/UnknownEnv:
   Environments:
     - development
