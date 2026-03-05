@@ -24,12 +24,14 @@ module Api
           github_user = fetch_github_user(token_data["access_token"])
           return fail!("Failed to fetch GitHub user") unless github_user["id"]
 
-          user.update!(
+          user.assign_attributes(
             github_uid: github_user["id"].to_s,
             github_username: github_user["login"],
             github_access_token: token_data["access_token"],
             github_token_scope: token_data["scope"]
           )
+
+          return fail!("GitHub account is already linked to another user") unless user.save
 
           success(user)
         end

@@ -18,6 +18,17 @@ Rails.application.routes.draw do
         get    "auth",       to: "/api/v1/github#auth"
         post   "callback",   to: "/api/v1/github#callback"
         delete "disconnect", to: "/api/v1/github#disconnect"
+
+        resources :repositories, only: [:index]
+        resources :subscriptions, only: [:index, :create, :destroy]
+        resources :notifications, only: [:index] do
+          member do
+            patch :read
+          end
+          collection do
+            patch :read_all
+          end
+        end
       end
 
       # Webhooks
