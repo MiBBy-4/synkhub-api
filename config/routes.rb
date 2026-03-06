@@ -33,6 +33,13 @@ Rails.application.routes.draw do
         resources :commits, only: [:index]
       end
 
+      # Google Calendar OAuth
+      namespace :google_calendar do
+        get    "auth",       to: "/api/v1/google_calendar#auth"
+        post   "callback",   to: "/api/v1/google_calendar#callback"
+        delete "disconnect", to: "/api/v1/google_calendar#disconnect"
+      end
+
       # User preferences
       namespace :users do
         resource :preferences, only: [:show, :update]

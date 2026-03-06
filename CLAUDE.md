@@ -43,7 +43,9 @@ ApplicationController (ActionController::API)
     ├── Api::V1::RegistrationsController        (public)
     ├── Api::V1::SessionsController             (public)
     └── Api::V1::AuthenticatedController        (includes Authentication, before_action)
-        └── Api::V1::UsersController            (auth required)
+        ├── Api::V1::UsersController            (auth required)
+        ├── Api::V1::GithubController           (auth required)
+        └── Api::V1::GoogleCalendarController   (auth required)
 ```
 
 All API controllers live under `app/controllers/api/v1/`. Public endpoints inherit from `Api::V1::ApplicationController`. Protected endpoints inherit from `Api::V1::AuthenticatedController`.

@@ -35,6 +35,10 @@ Register a new user.
   "data": {
     "id": 1,
     "email": "user@example.com",
+    "github_username": null,
+    "github_connected": false,
+    "google_email": null,
+    "google_calendar_connected": false,
     "token": "eyJhbGciOiJIUzI1NiJ9..."
   },
   "meta": {}
@@ -71,6 +75,10 @@ Authenticate an existing user.
   "data": {
     "id": 1,
     "email": "user@example.com",
+    "github_username": null,
+    "github_connected": false,
+    "google_email": null,
+    "google_calendar_connected": false,
     "token": "eyJhbGciOiJIUzI1NiJ9..."
   },
   "meta": {}
@@ -109,7 +117,11 @@ Returns the currently authenticated user.
 {
   "data": {
     "id": 1,
-    "email": "user@example.com"
+    "email": "user@example.com",
+    "github_username": null,
+    "github_connected": false,
+    "google_email": null,
+    "google_calendar_connected": false
   },
   "meta": {}
 }
@@ -171,7 +183,9 @@ Exchanges a GitHub OAuth code for an access token and links the GitHub account t
     "id": 1,
     "email": "user@example.com",
     "github_username": "octocat",
-    "github_connected": true
+    "github_connected": true,
+    "google_email": null,
+    "google_calendar_connected": false
   },
   "meta": {}
 }
@@ -198,7 +212,9 @@ Removes the GitHub connection from the user's account.
     "id": 1,
     "email": "user@example.com",
     "github_username": null,
-    "github_connected": false
+    "github_connected": false,
+    "google_email": null,
+    "google_calendar_connected": false
   },
   "meta": {}
 }
@@ -583,6 +599,95 @@ Updates the authenticated user's notification preferences. Creates the record if
 
 - `401 Unauthorized` — missing or invalid token
 - `422 Unprocessable Entity` — invalid event types or frequency
+
+---
+
+## Google Calendar Endpoints
+
+### GET /api/v1/google_calendar/auth
+
+Returns a Google OAuth authorization URL. The frontend should redirect the user to this URL.
+
+**Headers:** `Authorization: Bearer <jwt_token>` (required)
+
+**Success response:** `200 OK`
+
+```json
+{
+  "data": {
+    "url": "https://accounts.google.com/o/oauth2/v2/auth?client_id=...&redirect_uri=...&scope=...&state=..."
+  },
+  "meta": {}
+}
+```
+
+**Error responses:**
+
+- `401 Unauthorized` — missing or invalid token
+
+---
+
+### POST /api/v1/google_calendar/callback
+
+Exchanges a Google OAuth code for access and refresh tokens and links the Google account to the user.
+
+**Headers:** `Authorization: Bearer <jwt_token>` (required)
+
+**Request body:**
+
+| Field   | Type   | Required | Description                          |
+|---------|--------|----------|--------------------------------------|
+| `code`  | string | yes      | Authorization code from Google       |
+| `state` | string | yes      | CSRF state token (must match cache)  |
+
+**Success response:** `200 OK`
+
+```json
+{
+  "data": {
+    "id": 1,
+    "email": "user@example.com",
+    "github_username": null,
+    "github_connected": false,
+    "google_email": "user@gmail.com",
+    "google_calendar_connected": true
+  },
+  "meta": {}
+}
+```
+
+**Error responses:**
+
+- `401 Unauthorized` — missing or invalid token
+- `422 Unprocessable Entity` — invalid state, failed token exchange, no refresh token, or failed user info fetch
+
+---
+
+### DELETE /api/v1/google_calendar/disconnect
+
+Removes the Google Calendar connection from the user's account.
+
+**Headers:** `Authorization: Bearer <jwt_token>` (required)
+
+**Success response:** `200 OK`
+
+```json
+{
+  "data": {
+    "id": 1,
+    "email": "user@example.com",
+    "github_username": null,
+    "github_connected": false,
+    "google_email": null,
+    "google_calendar_connected": false
+  },
+  "meta": {}
+}
+```
+
+**Error responses:**
+
+- `401 Unauthorized` — missing or invalid token
 
 ---
 

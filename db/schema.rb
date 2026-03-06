@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_05_105858) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_05_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -79,8 +79,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_05_105858) do
     t.string "github_username"
     t.string "github_access_token"
     t.string "github_token_scope"
+    t.string "google_uid"
+    t.string "google_email"
+    t.string "google_access_token"
+    t.string "google_refresh_token"
+    t.datetime "google_token_expires_at"
+    t.string "google_token_scope"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["github_uid"], name: "index_users_on_github_uid", unique: true, where: "(github_uid IS NOT NULL)"
+    t.index ["google_uid"], name: "index_users_on_google_uid", unique: true, where: "(google_uid IS NOT NULL)"
   end
 
   add_foreign_key "github_notifications", "github_webhook_events"

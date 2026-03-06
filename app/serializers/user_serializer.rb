@@ -5,5 +5,5 @@ class UserSerializer
 
   root_key :user
 
-  attributes :id, :email, :github_username, :github_connected
+  attributes :id, :email, :github_username, :github_connected, :google_email, :google_calendar_connected
 end
