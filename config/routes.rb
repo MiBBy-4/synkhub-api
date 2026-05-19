@@ -29,6 +29,8 @@ Rails.application.routes.draw do
             patch :read_all
           end
         end
+        resources :stats, only: [:index]
+        resources :commits, only: [:index]
       end
 
       # Webhooks

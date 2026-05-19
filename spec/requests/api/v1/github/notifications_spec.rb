@@ -7,10 +7,13 @@ RSpec.describe "Api::V1::Github::Notifications", type: :request do
   let(:headers) { auth_headers_for(user) }
 
   describe "GET /api/v1/github/notifications" do
+    let(:repo_name) { "#{Faker::Internet.username}/#{Faker::App.name.parameterize}" }
+    let(:params) { {} }
+
     before do
       create(:github_notification, user: user, created_at: 2.days.ago)
       create(:github_notification, user: user, created_at: 1.day.ago)
-      get "/api/v1/github/notifications", headers: headers
+      get "/api/v1/github/notifications", headers: headers, params: params
     end
 
     context "with a valid token" do
@@ -26,6 +29,54 @@ RSpec.describe "Api::V1::Github::Notifications", type: :request do
       let(:headers) { {} }
 
       it { expect(response).to have_http_status(:unauthorized) }
+    end
+
+    context "with event_type filter" do
+      let(:params) { { event_type: "push" } }
+
+      before do
+        create(:github_notification, user: user, event_type: "push")
+        create(:github_notification, user: user, event_type: "issues")
+        get "/api/v1/github/notifications", headers: headers, params: params
+      end
+
+      it "returns only matching event type" do
+        expect(response).to have_http_status(:ok)
+        data = response.parsed_body["data"]
+        expect(data).to all(include("event_type" => "push"))
+      end
+    end
+
+    context "with repo filter" do
+      let(:params) { { repo: repo_name } }
+
+      before do
+        create(:github_notification, user: user, repo_full_name: repo_name)
+        create(:github_notification, user: user, repo_full_name: "other/repo")
+        get "/api/v1/github/notifications", headers: headers, params: params
+      end
+
+      it "returns only matching repo" do
+        expect(response).to have_http_status(:ok)
+        data = response.parsed_body["data"]
+        expect(data).to all(include("repo_full_name" => repo_name))
+      end
+    end
+
+    context "with read filter" do
+      let(:params) { { read: "false" } }
+
+      before do
+        create(:github_notification, user: user, read: true)
+        create(:github_notification, user: user, read: false)
+        get "/api/v1/github/notifications", headers: headers, params: params
+      end
+
+      it "returns only unread notifications" do
+        expect(response).to have_http_status(:ok)
+        data = response.parsed_body["data"]
+        expect(data).to all(include("read" => false))
+      end
     end
   end
 
